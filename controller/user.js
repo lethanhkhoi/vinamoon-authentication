@@ -80,8 +80,8 @@ async function verify(req, res, next) {
   try {
     var payload = await jwt.decodeToken(token);
   } catch (e) {
-    res.status(401);
-    return res.json({
+
+    return res.status(401).json({
       errCode: true,
       data: "jwt malformed",
     });
@@ -97,8 +97,7 @@ async function verify(req, res, next) {
   account = await database.userModel().find({ phone: payload.phone }).toArray();
 
   if (account.length == 0 || account.length > 1) {
-    res.status(401);
-    return res.json({
+    return res.status(401).json({
       errCode: true,
       data: "account not found",
     });
@@ -123,8 +122,7 @@ async function refreshToken(req, res) {
   try {
     var payload = await jwt.decodeRefreshToken(refreshToken);
   } catch (e) {
-    res.status(401);
-    return res.json({
+    return res.status(401).json({
       errCode: true,
       data: "jwt malformed",
     });
@@ -144,8 +142,7 @@ async function refreshToken(req, res) {
       .toArray();
 
     if (account.length == 0 || account.length > 1) {
-      res.status(401);
-      return res.json({
+      return res.status(401).json({
         errCode: true,
         data: "account not found",
       });
@@ -163,7 +160,7 @@ async function refreshToken(req, res) {
       data: account[0],
     });
   } else {
-    res.status(404).send("Invalid request");
+    return res.status(404).json({errCode: true, data: "Invalid request"});
   }
 }
 
