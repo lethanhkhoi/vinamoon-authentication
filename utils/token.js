@@ -2,8 +2,8 @@ const jwt = require("jsonwebtoken")
 const config = require("../config/app.json")
 const createSecretKey =async (payload, refreshToken = null)=>{
     const options ={
-        expiresIn: 1800,
-        refreshToken: 604800,
+        expiresIn: 30,
+        refreshToken: 180,
     }
     const token = {
         token: jwt.sign(payload, config.tokenKey, {expiresIn: options.expiresIn}),

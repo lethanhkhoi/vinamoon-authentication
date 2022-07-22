@@ -21,14 +21,9 @@ async function login(req, res) {
   }
   if (!user.token) {
     const newToken = await jwt.createSecretKey({ phone: req.body.phone });
-    user.token = newToken.token;
     user.refreshToken = newToken.refreshToken;
-    const data = {
-      status: "Log in",
-      token: user.token,
-      refreshToken: user.refreshToken,
-    };
-    refreshTokens[newToken.refreshToken] = data;
+    await userCol.update(user.phone, user);
+    user.token = newToken.token;
   }
   return res.json({ errorCode: null, data: user });
 }
@@ -51,6 +46,7 @@ async function register(req, res) {
     birthday: req.body.birthday
       ? moment(req.body.birthday, "DD/MM/YYYY").utc().toDate()
       : null,
+    refreshToken: null,
     role: req.body.role ? req.body.role : "user",
     createdAt: new Date(),
   };
@@ -59,12 +55,6 @@ async function register(req, res) {
     const newToken = await jwt.createSecretKey({ phone: req.body.phone });
     data.token = newToken.token;
     data.refreshToken = newToken.refreshToken;
-    const response = {
-      status: "Log in",
-      token: data.token,
-      refreshToken: data.refreshToken,
-    };
-    refreshTokens[newToken.refreshToken] = response;
   }
   return res.json({ errorCode: null, data: data });
 }
@@ -80,7 +70,6 @@ async function verify(req, res, next) {
   try {
     var payload = await jwt.decodeToken(token);
   } catch (e) {
-
     return res.status(401).json({
       errCode: true,
       data: "jwt malformed",
@@ -134,34 +123,25 @@ async function refreshToken(req, res) {
     });
   }
   // if refresh token exists
-  if (refreshToken && refreshToken in refreshTokens) {
-    let account = [];
-    account = await database
-      .userModel()
-      .find({ phone: payload.phone })
-      .toArray();
+  let account = [];
+  account = await database.userModel().find({ phone: payload.phone }).toArray();
 
-    if (account.length == 0 || account.length > 1) {
-      return res.status(401).json({
-        errCode: true,
-        data: "account not found",
-      });
-    }
-    const newToken = await jwt.createSecretKey(
-      { phone: account[0].phone },
-      refreshToken
-    );
-    account[0].token = newToken.token;
-    refreshTokens[refreshToken].token = newToken.token;
-    // update the token in the list
-    refreshTokens[refreshToken].token = newToken.token;
-    return res.json({
-      errCode: null,
-      data: account[0],
+  if (account.length == 0 || account.length > 1) {
+    return res.status(401).json({
+      errCode: true,
+      data: "account not found",
     });
-  } else {
-    return res.status(404).json({errCode: true, data: "Invalid request"});
   }
+  const newToken = await jwt.createSecretKey(
+    { phone: account[0].phone },
+    refreshToken
+  );
+  account[0].token = newToken.token;
+  // update the token in the list
+  return res.json({
+    errCode: null,
+    data: account[0],
+  });
 }
 
 async function userAuthentication(req, res, next) {
@@ -217,5 +197,5 @@ module.exports = {
   verify,
   register,
   refreshToken,
-  userAuthentication
+  userAuthentication,
 };
