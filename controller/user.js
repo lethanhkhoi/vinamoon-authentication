@@ -63,8 +63,8 @@ async function register(req, res) {
     vehicle:
       req.body.role === "driver"
         ? {
-            id: req.body.vehicle.id,
-            no: req.body.vehicle.number,
+            id: req.body.vehicle?.id,
+            no: req.body.vehicle?.number,
           }
         : null,
     createdAt: new Date(),
