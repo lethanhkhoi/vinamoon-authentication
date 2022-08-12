@@ -82,16 +82,18 @@ async function verify(req, res, next) {
   try {
     let token = req.headers["token"];
     if (!token) {
-      throw new ErrorHandler(401, "Authentication fail. No token.");
+      //throw new ErrorHandler(401, "Authentication fail. No token.");
+      return res.json({ errorCode: true, data: "Authen fail" });
     }
 
     try {
       var payload = await jwt.decodeToken(token);
     } catch (e) {
-      next(e);
+      return res.json({ errorCode: true, data: "Authen fail" });
     }
     if (!payload || !payload.phone) {
-      throw new ErrorHandler(401, "Authentication fail. No payload/phone.");
+      //throw new ErrorHandler(401, "Authentication fail. No payload/phone.");
+      return res.json({ errorCode: true, data: "Authen fail" });
     }
 
     let account = [];
@@ -101,7 +103,8 @@ async function verify(req, res, next) {
       .toArray();
 
     if (account.length == 0 || account.length > 1) {
-      throw new ErrorHandler(401, "Account not exist.");
+      // throw new ErrorHandler(401, "Account not exist.");
+      return res.json({ errorCode: true, data: "Cannot find" });
     }
     account[0].token = token;
 
