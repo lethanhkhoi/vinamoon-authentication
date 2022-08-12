@@ -11,24 +11,28 @@ async function getAll(req, res) {
   const data = await userCol.getAll();
   return res.json({ errorCode: null, data });
 }
-async function login(req, res) {
-  const user = await database.userModel().findOne({ phone: req.body.phone });
-  if (!user) {
-    throw new ErrorHandler(401, "Account not found");
-    // return res.json({ errorCode: true, data: "Tai khoan khong ton tai" });
+async function login(req, res, next) {
+  try {
+    const user = await database.userModel().findOne({ phone: req.body.phone });
+    if (!user) {
+      throw new ErrorHandler(401, "Account not found");
+      // return res.json({ errorCode: true, data: "Tai khoan khong ton tai" });
+    }
+    const checkPass = await bcrypt.compare(req.body.password, user.password);
+    if (!checkPass) {
+      throw new ErrorHandler(401, "Incorrect username or password");
+      // return res.json({ errorCode: true, data: "Pass sai" });
+    }
+    if (!user.token) {
+      const newToken = await jwt.createSecretKey({ phone: req.body.phone });
+      user.refreshToken = newToken.refreshToken;
+      await userCol.update(user.phone, user);
+      user.token = newToken.token;
+    }
+    return res.json({ errorCode: null, data: user });
+  } catch (err) {
+    next(err);
   }
-  const checkPass = await bcrypt.compare(req.body.password, user.password);
-  if (!checkPass) {
-    throw new ErrorHandler(401, "Incorrect username or password");
-    // return res.json({ errorCode: true, data: "Pass sai" });
-  }
-  if (!user.token) {
-    const newToken = await jwt.createSecretKey({ phone: req.body.phone });
-    user.refreshToken = newToken.refreshToken;
-    await userCol.update(user.phone, user);
-    user.token = newToken.token;
-  }
-  return res.json({ errorCode: null, data: user });
 }
 async function register(req, res) {
   const user = await database.userModel().findOne({ phone: req.body.phone });

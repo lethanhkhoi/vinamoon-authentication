@@ -9,6 +9,7 @@ class ErrorHandler extends Error {
 const logger = require("../logger/winston");
 
 const handleError = (err, req, res, next) => {
+  console.log("TEST");
   const { statusCode, message } = err;
   logger.error(err);
 

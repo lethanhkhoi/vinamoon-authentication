@@ -18,6 +18,7 @@ app.use(
 );
 
 app.use(morganMiddleware);
+app.use(handleError);
 database.connectDatabase(() => {
   logger.info("Database connected");
   console.log("connect success");
