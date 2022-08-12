@@ -60,6 +60,13 @@ async function register(req, res) {
       : null,
     refreshToken: null,
     role: req.body.role ? req.body.role : "user",
+    vehicle:
+      req.body.role === "driver"
+        ? {
+            id: req.body.vehicle.id,
+            no: req.body.vehicle.number,
+          }
+        : null,
     createdAt: new Date(),
   };
   await userCol.create(data);
@@ -70,33 +77,41 @@ async function register(req, res) {
   }
   return res.json({ errorCode: null, data: data });
 }
+
 async function verify(req, res, next) {
-  let token = req.headers["token"];
-  if (!token) {
-    throw new ErrorHandler(401, "Authentication fail. No token.");
-  }
-
   try {
-    var payload = await jwt.decodeToken(token);
-  } catch (e) {
-    next(e);
-  }
-  if (!payload || !payload.phone) {
-    throw new ErrorHandler(401, "Authentication fail. No payload/phone.");
-  }
+    let token = req.headers["token"];
+    if (!token) {
+      throw new ErrorHandler(401, "Authentication fail. No token.");
+    }
 
-  let account = [];
-  account = await database.userModel().find({ phone: payload.phone }).toArray();
+    try {
+      var payload = await jwt.decodeToken(token);
+    } catch (e) {
+      next(e);
+    }
+    if (!payload || !payload.phone) {
+      throw new ErrorHandler(401, "Authentication fail. No payload/phone.");
+    }
 
-  if (account.length == 0 || account.length > 1) {
-    throw new ErrorHandler(401, "Account not exist.");
+    let account = [];
+    account = await database
+      .userModel()
+      .find({ phone: payload.phone })
+      .toArray();
+
+    if (account.length == 0 || account.length > 1) {
+      throw new ErrorHandler(401, "Account not exist.");
+    }
+    account[0].token = token;
+
+    return res.json({
+      errCode: null,
+      data: account[0],
+    });
+  } catch (error) {
+    return res.json({ errorCode: true, data: "jwt expired" });
   }
-  account[0].token = token;
-
-  return res.json({
-    errCode: null,
-    data: account[0],
-  });
 }
 
 async function refreshToken(req, res) {
