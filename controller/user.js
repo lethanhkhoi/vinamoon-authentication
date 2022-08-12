@@ -16,12 +16,10 @@ async function login(req, res, next) {
     const user = await database.userModel().findOne({ phone: req.body.phone });
     if (!user) {
       throw new ErrorHandler(401, "Account not found");
-      // return res.json({ errorCode: true, data: "Tai khoan khong ton tai" });
     }
     const checkPass = await bcrypt.compare(req.body.password, user.password);
     if (!checkPass) {
       throw new ErrorHandler(401, "Incorrect username or password");
-      // return res.json({ errorCode: true, data: "Pass sai" });
     }
     if (!user.token) {
       const newToken = await jwt.createSecretKey({ phone: req.body.phone });
@@ -86,8 +84,7 @@ async function verify(req, res, next) {
   try {
     let token = req.headers["token"];
     if (!token) {
-      //throw new ErrorHandler(401, "Authentication fail. No token.");
-      return res.json({ errorCode: true, data: "Authen fail" });
+      throw new ErrorHandler(401, "Authentication fail. No token.");
     }
 
     try {
@@ -96,8 +93,7 @@ async function verify(req, res, next) {
       return res.json({ errorCode: true, data: "Authen fail" });
     }
     if (!payload || !payload.phone) {
-      //throw new ErrorHandler(401, "Authentication fail. No payload/phone.");
-      return res.json({ errorCode: true, data: "Authen fail" });
+      throw new ErrorHandler(401, "Authentication fail. No payload/phone.");
     }
 
     let account = [];
@@ -107,8 +103,7 @@ async function verify(req, res, next) {
       .toArray();
 
     if (account.length == 0 || account.length > 1) {
-      // throw new ErrorHandler(401, "Account not exist.");
-      return res.json({ errorCode: true, data: "Cannot find" });
+      throw new ErrorHandler(401, "Account not exist.");
     }
     account[0].token = token;
 
@@ -117,41 +112,44 @@ async function verify(req, res, next) {
       data: account[0],
     });
   } catch (error) {
-    return res.json({ errorCode: true, data: "jwt expired" });
+    next(error);
   }
 }
 
-async function refreshToken(req, res) {
-  let { refreshToken } = req.body;
-  if (!refreshToken) {
-    throw new ErrorHandler(401, "No refresh token.");
-  }
-
+async function refreshToken(req, res, next) {
   try {
+    let { refreshToken } = req.body;
+    if (!refreshToken) {
+      throw new ErrorHandler(401, "No refresh token.");
+    }
     var payload = await jwt.decodeRefreshToken(refreshToken);
+
+    if (!payload || !payload.phone) {
+      throw new ErrorHandler(401, "Authentication fail. No payload/phone.");
+    }
+    // if refresh token exists
+    let account = [];
+    account = await database
+      .userModel()
+      .find({ phone: payload.phone })
+      .toArray();
+
+    if (account.length == 0 || account.length > 1) {
+      throw new ErrorHandler(401, "Account not exist.");
+    }
+    const newToken = await jwt.createSecretKey(
+      { phone: account[0].phone },
+      refreshToken
+    );
+    account[0].token = newToken.token;
+    // update the token in the list
+    return res.json({
+      errCode: null,
+      data: account[0],
+    });
   } catch (e) {
     next(e);
   }
-  if (!payload || !payload.phone) {
-    throw new ErrorHandler(401, "Authentication fail. No payload/phone.");
-  }
-  // if refresh token exists
-  let account = [];
-  account = await database.userModel().find({ phone: payload.phone }).toArray();
-
-  if (account.length == 0 || account.length > 1) {
-    throw new ErrorHandler(401, "Account not exist.");
-  }
-  const newToken = await jwt.createSecretKey(
-    { phone: account[0].phone },
-    refreshToken
-  );
-  account[0].token = newToken.token;
-  // update the token in the list
-  return res.json({
-    errCode: null,
-    data: account[0],
-  });
 }
 
 async function userAuthentication(req, res, next) {
