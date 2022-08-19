@@ -1,5 +1,12 @@
 commands =[
     {
+        name:"update",
+        controller:"user",
+        method:"patch",
+        api:"/user/:code",
+        middleware:[]
+    },
+    {
         name:"getAll",
         controller:"user",
         method:"get",
@@ -34,5 +41,6 @@ commands =[
         api:"/token",
         middleware:[]
     },
+    
 ]
 module.exports= commands

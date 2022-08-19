@@ -184,6 +184,19 @@ async function userAuthentication(req, res, next) {
 
   return next();
 }
+async function update(req, res) {
+  try {
+    const phone = req.params.code
+    const data = req.body
+    const result = await userCol.update(phone, data)
+    if(!result){
+      return res.json({errorCode: true, data: 'Update fail'}) 
+    }
+    return res.json({errorCode: null, data: result.value}) 
+  } catch (error) {
+    return res.json({errorCode: true, data: 'system error'}) 
+  }
+}
 module.exports = {
   getAll,
   login,
@@ -191,4 +204,5 @@ module.exports = {
   register,
   refreshToken,
   userAuthentication,
+  update,
 };
