@@ -10,6 +10,32 @@ async function getAll(req, res) {
   const data = await userCol.getAll();
   return res.json({ errorCode: null, data });
 }
+async function loginCallCenter(req, res, next) {
+  try {
+    const user = await database.userModel().findOne({ phone: req.body.phone });
+    if (!user) {
+      throw new ErrorHandler(401, "Account not found");
+    }
+    console.log(user);
+    if (user.role !== "admin" && user.role !== "operator") {
+      throw new ErrorHandler(401, "Incorrect username or password");
+    }
+    const checkPass = await bcrypt.compare(req.body.password, user.password);
+    if (!checkPass) {
+      throw new ErrorHandler(401, "Incorrect username or password");
+    }
+    if (!user.token) {
+      const newToken = await jwt.createSecretKey({ phone: req.body.phone });
+      user.refreshToken = newToken.refreshToken;
+      await userCol.update(user.phone, user);
+      user.token = newToken.token;
+    }
+    return res.json({ errorCode: null, data: user });
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function login(req, res, next) {
   try {
     const user = await database.userModel().findOne({ phone: req.body.phone });
@@ -31,6 +57,7 @@ async function login(req, res, next) {
     next(err);
   }
 }
+
 async function register(req, res) {
   const user = await database.userModel().findOne({ phone: req.body.phone });
   if (user) {
@@ -89,7 +116,10 @@ async function verify(req, res, next) {
     try {
       var payload = await jwt.decodeToken(token);
     } catch (e) {
-      return res.json({ errorCode: true, data: "Authen fail" });
+      throw new ErrorHandler(
+        401,
+        e.message || "Authentication fail. Invalid token."
+      );
     }
     if (!payload || !payload.phone) {
       throw new ErrorHandler(401, "Authentication fail. No payload/phone.");
@@ -186,39 +216,40 @@ async function userAuthentication(req, res, next) {
 }
 async function update(req, res) {
   try {
-    const phone = req.params.code
-    const data = req.body
-    const result = await userCol.update(phone, data)
-    if(!result){
-      return res.json({errorCode: true, data: 'Update fail'}) 
+    const phone = req.params.code;
+    const data = req.body;
+    const result = await userCol.update(phone, data);
+    if (!result) {
+      return res.json({ errorCode: true, data: "Update fail" });
     }
-    return res.json({errorCode: null, data: result.value}) 
+    return res.json({ errorCode: null, data: result.value });
   } catch (error) {
-    return res.json({errorCode: true, data: 'system error'}) 
+    return res.json({ errorCode: true, data: "system error" });
   }
 }
 async function changePass(req, res) {
   try {
-    const phone = req.params.code
-    let data = req.body
+    const phone = req.params.code;
+    let data = req.body;
     const password = await bcrypt.hash(req.body.password, saltRounds);
-    data.password = password
-    const result = await userCol.update(phone, data)
-    if(!result){
-      return res.json({errorCode: true, data: 'Update fail'}) 
+    data.password = password;
+    const result = await userCol.update(phone, data);
+    if (!result) {
+      return res.json({ errorCode: true, data: "Update fail" });
     }
-    return res.json({errorCode: null, data: result.value}) 
+    return res.json({ errorCode: null, data: result.value });
   } catch (error) {
-    return res.json({errorCode: true, data: 'system error'}) 
+    return res.json({ errorCode: true, data: "system error" });
   }
 }
 module.exports = {
   getAll,
   login,
+  loginCallCenter,
   verify,
   register,
   refreshToken,
   userAuthentication,
   update,
-  changePass
+  changePass,
 };
