@@ -7,6 +7,13 @@ commands =[
         middleware:[]
     },
     {
+        name:"changePass",
+        controller:"user",
+        method:"patch",
+        api:"/changepass/:code",
+        middleware:[]
+    },
+    {
         name:"getAll",
         controller:"user",
         method:"get",

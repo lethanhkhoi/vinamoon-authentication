@@ -197,6 +197,21 @@ async function update(req, res) {
     return res.json({errorCode: true, data: 'system error'}) 
   }
 }
+async function changePass(req, res) {
+  try {
+    const phone = req.params.code
+    let data = req.body
+    const password = await bcrypt.hash(req.body.password, saltRounds);
+    data.password = password
+    const result = await userCol.update(phone, data)
+    if(!result){
+      return res.json({errorCode: true, data: 'Update fail'}) 
+    }
+    return res.json({errorCode: null, data: result.value}) 
+  } catch (error) {
+    return res.json({errorCode: true, data: 'system error'}) 
+  }
+}
 module.exports = {
   getAll,
   login,
@@ -205,4 +220,5 @@ module.exports = {
   refreshToken,
   userAuthentication,
   update,
+  changePass
 };
