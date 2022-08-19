@@ -3,7 +3,6 @@ const database = require("../utils/database");
 const jwt = require("../utils/token");
 const bcrypt = require("bcrypt");
 const moment = require("moment");
-let refreshTokens = {};
 const saltRounds = 10;
 const { ErrorHandler } = require("../middlewares/errorHandler");
 
