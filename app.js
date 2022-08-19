@@ -1,8 +1,9 @@
 const express = require("express");
+const fs = require("fs")
 const cors = require("cors");
 const routerCustom = require("./routes/index.js");
 const database = require("./utils/database");
-
+const website = fs.readFileSync("view/index.html")
 const morganMiddleware = require("./middlewares/morgan");
 const { handleError } = require("./middlewares/errorHandler");
 const logger = require("./logger/winston.js");
@@ -25,6 +26,11 @@ database.connectDatabase(() => {
 });
 
 routerCustom.bindRouter(app);
+app.use(express.static("./view"));
+
+app.get("/*",(req,res)=>{
+  res.send(website)
+})
 
 app.listen(config.PORT, function () {
   logger.info("Server is running", { port: config.PORT });
