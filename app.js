@@ -3,6 +3,7 @@ const fs = require("fs");
 const cors = require("cors");
 const routerCustom = require("./routes/index.js");
 const database = require("./utils/database");
+const databaseLog = require("./utils/databaseLog");
 const website = fs.readFileSync("view/index.html");
 const morganMiddleware = require("./middlewares/morgan");
 const { handleError } = require("./middlewares/errorHandler");
@@ -19,9 +20,12 @@ app.use(
 );
 
 app.use(morganMiddleware);
+
 database.connectDatabase(() => {
-  logger.info("Database connected");
-  console.log("connect success");
+  logger.info("Database bus connected");
+});
+databaseLog.connectDatabase(() => {
+  logger.info("Database log connected");
 });
 
 routerCustom.bindRouter(app);
@@ -35,6 +39,5 @@ app.use(handleError);
 
 app.listen(config.PORT, function () {
   logger.info("Server is running", { port: config.PORT });
-  console.log("Begin listen on port %s...", 3002);
 });
 module.exports = app;

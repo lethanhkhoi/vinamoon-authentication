@@ -1,4 +1,4 @@
 {
-    "tokenKey": "CALLCENTER",
-    "refreshTokenKey": "REFRESH"
+  "tokenKey": "CALLCENTER",
+  "refreshTokenKey": "REFRESH"
 }

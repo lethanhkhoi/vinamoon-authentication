@@ -11,7 +11,13 @@ const config = {
   LOG_TOKEN: process.env.LOG_TOKEN,
 };
 
+const database = {
+  BUS: process.env.DB_BUS,
+  LOG: process.env.DB_LOG,
+};
+
 module.exports = {
   loggerConstant,
   config,
+  database,
 };
