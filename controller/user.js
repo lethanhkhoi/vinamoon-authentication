@@ -16,7 +16,6 @@ async function loginCallCenter(req, res, next) {
     if (!user) {
       throw new ErrorHandler(401, "Account not found");
     }
-    console.log(user);
     if (user.role !== "admin" && user.role !== "operator") {
       throw new ErrorHandler(401, "Incorrect username or password");
     }
@@ -182,37 +181,41 @@ async function refreshToken(req, res, next) {
 }
 
 async function userAuthentication(req, res, next) {
-  let token = req.headers["token"];
-
-  if (!token) {
-    throw new ErrorHandler(401, "Authentication fail. No token.");
-  }
-
   try {
-    var payload = await jwt.decodeToken(token);
-  } catch (e) {
-    next(e);
+    let token = req.headers["token"];
+
+    if (!token) {
+      throw new ErrorHandler(401, "Authentication fail. No token.");
+    }
+
+    try {
+      var payload = await jwt.decodeToken(token);
+    } catch (e) {
+      next(e);
+    }
+
+    if (!payload) {
+      throw new ErrorHandler(401, "Authentication fail. No payload.");
+    }
+
+    let account = [];
+    account = await database.userModel().find({ email: payload }).toArray();
+
+    if (account.length == 0 || account.length > 1) {
+      throw new ErrorHandler(401, "Account not exist.");
+    }
+
+    req.user = (({ _id, email, firstName, lastName }) => ({
+      _id,
+      email,
+      firstName,
+      lastName,
+    }))(account[0]);
+
+    return next();
+  } catch (err) {
+    next(err);
   }
-
-  if (!payload) {
-    throw new ErrorHandler(401, "Authentication fail. No payload.");
-  }
-
-  let account = [];
-  account = await database.userModel().find({ email: payload }).toArray();
-
-  if (account.length == 0 || account.length > 1) {
-    throw new ErrorHandler(401, "Account not exist.");
-  }
-
-  req.user = (({ _id, email, firstName, lastName }) => ({
-    _id,
-    email,
-    firstName,
-    lastName,
-  }))(account[0]);
-
-  return next();
 }
 async function update(req, res) {
   try {
