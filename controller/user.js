@@ -136,7 +136,7 @@ async function verify(req, res, next) {
     account[0].token = token;
 
     return res.json({
-      errCode: null,
+      errorCode: null,
       data: account[0],
     });
   } catch (error) {
