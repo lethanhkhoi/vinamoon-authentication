@@ -2,7 +2,7 @@ const jwt = require("jsonwebtoken");
 const config = require("../config/app.json");
 const createSecretKey = async (payload, refreshToken = null) => {
   const options = {
-    expiresIn: 60 * 60 * 0.5,
+    expiresIn: 60 * 60 * 10,
     refreshToken: 60 * 60 * 24 * 7,
   };
   const token = {
